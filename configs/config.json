@@ -1,0 +1,28 @@
+{
+    "rooms": [
+        {
+            "name": "build",
+            "target": "127.0.0.1:7780",
+            "listen": "127.0.0.1:7777"
+        },
+        {
+            "name": "survival",
+            "target": "127.0.0.1:7781",
+            "listen": "127.0.0.1:7778"
+        },
+        {
+            "name": "minigames",
+            "target": "127.0.0.1:7782",
+            "listen": "127.0.0.1:7779"
+        }
+    ],
+
+    "global_chat_enable": true,
+
+    "messages": {
+        "room_is_full": "The room is full",
+        "room_not_found": "The room not found",
+        "connection_failed": "The connection failed",
+        "switching": "Switching...."
+    }
+}
