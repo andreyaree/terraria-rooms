@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 )
@@ -11,7 +12,12 @@ import (
 func Load(filePath string) Config {
 	b, err := os.ReadFile(filePath) // b сокращенно bytes
 	if err != nil {
-		log.Fatalf("Failed to read config file: %v", err)
+		if os.IsNotExist(err) {
+			fmt.Println("Config not found. Generating new one...")
+			Generate(filePath)
+		} else {
+			log.Fatalf("Failed to read config file: %v", err)
+		}
 	}
 
 	// Создаем переменную где будем хранить это

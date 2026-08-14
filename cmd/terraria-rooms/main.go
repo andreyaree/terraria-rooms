@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	config := config.Load("../../configs/config.json")
+	config := config.Load("config.json")
 	m := &metrics.Metrics{}
 	go metrics.Show(m)
 
