@@ -23,6 +23,8 @@ func Generate(filePath string) {
 			},
 		},
 
+		Blacklist: []string{},
+
 		GlobalChat: true,
 
 		Messages: MessagesConfig{
@@ -33,7 +35,7 @@ func Generate(filePath string) {
 		},
 	}
 
-	// Сериализируем структуру в JSON
+	// Сериализуем структуру в JSON
 
 	data, err := json.MarshalIndent(defaultConfig, " ", "    ")
 	if err != nil {

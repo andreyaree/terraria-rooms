@@ -6,6 +6,7 @@ package config
 
 type Config struct {
 	Rooms      []RoomsConfig  `json:"rooms"`
+	Blacklist  []string       `json:"blacklist"`
 	GlobalChat bool           `json:"global_chat_enable"`
 	Messages   MessagesConfig `json:"messages"`
 }

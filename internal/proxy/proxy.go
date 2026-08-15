@@ -9,8 +9,7 @@ import (
 )
 
 // Устанавливаем подключение и перехватываем его, работая с ним в следующей функции
-
-func Setup(serverAddress, listenAddress string, m *metrics.Metrics) {
+func Setup(serverAddress, listenAddress string, blacklist *Blacklist, m *metrics.Metrics) {
 	listener, err := net.Listen("tcp", listenAddress)
 	if err != nil {
 		log.Println(err)
@@ -24,12 +23,21 @@ func Setup(serverAddress, listenAddress string, m *metrics.Metrics) {
 			log.Println(err)
 			return
 		}
+
+		// Получаем и разделяем адрес подключения на две части: IP и порт, и форматируем это в строку
+		address, _, _ := net.SplitHostPort(clientConn.RemoteAddr().String())
+
+		// Проверяем в чёрном списке ли адрес или нет, если истина, тогда обрываем соединение
+		if blacklist.IsBlacklisted(address) {
+			clientConn.Close()
+			return
+		}
+
 		go handleConnection(clientConn, serverAddress, m)
 	}
 }
 
 // Работа с подключением, добавляем значения в метрику и "перекачиваем" данные на слушающий порт
-
 func handleConnection(clientConn net.Conn, serverAddress string, m *metrics.Metrics) {
 	m.ActiveConnections.Add(1)
 	m.AllTimeConnections.Add(1)

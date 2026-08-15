@@ -10,12 +10,16 @@ import (
 
 func main() {
 	config := config.Load("config.json")
+
+	blacklist := proxy.NewBlacklist(config.Blacklist)
+	blacklist.ShowBlacklist()
+
 	m := &metrics.Metrics{}
 	go metrics.Show(m)
 
 	for _, room := range config.Rooms {
 		fmt.Printf("%s: %s -> %s\n", room.Name, room.ListenAddress, room.ServerAddress)
-		go proxy.Setup(room.ServerAddress, room.ListenAddress, m)
+		go proxy.Setup(room.ServerAddress, room.ListenAddress, blacklist, m)
 	}
 	select {}
 }
