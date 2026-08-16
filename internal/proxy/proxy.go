@@ -1,11 +1,14 @@
 package proxy
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net"
+	"time"
 
 	"github.com/andreyaree/terraria-rooms/internal/metrics"
+	"github.com/andreyaree/terraria-rooms/internal/terraria"
 )
 
 // Устанавливаем подключение и перехватываем его, работая с ним в следующей функции
@@ -29,6 +32,18 @@ func Setup(serverAddress, listenAddress string, blacklist *Blacklist, m *metrics
 
 		// Проверяем в чёрном списке ли адрес или нет, если истина, тогда обрываем соединение
 		if blacklist.IsBlacklisted(address) {
+			packet := terraria.FatalErrorPacket{
+				ErrorText: "       You are blacklisted here!     ",
+			}
+			data := packet.Data()
+
+			_, err := clientConn.Write(data)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			time.Sleep(time.Second)
+
 			clientConn.Close()
 			return
 		}
