@@ -9,6 +9,7 @@ import (
 
 	"github.com/andreyaree/terraria-rooms/internal/metrics"
 	"github.com/andreyaree/terraria-rooms/internal/terraria"
+	"github.com/andreyaree/terraria-rooms/internal/terraria/packets"
 )
 
 // Устанавливаем подключение и перехватываем его, работая с ним в следующей функции
@@ -32,10 +33,11 @@ func Setup(serverAddress, listenAddress string, blacklist *Blacklist, m *metrics
 
 		// Проверяем в чёрном списке ли адрес или нет, если истина, тогда обрываем соединение
 		if blacklist.IsBlacklisted(address) {
-			packet := terraria.FatalErrorPacket{
-				ErrorText: "       You are blacklisted here!     ",
+			packet := packets.FatalErrorPacket{
+				Text: "You are blacklisted :<",
 			}
-			data := packet.Data()
+			data := terraria.NewPacket(packet)
+			fmt.Printf("Packet Data: %x", data)
 
 			_, err := clientConn.Write(data)
 			if err != nil {

@@ -32,6 +32,7 @@ func Generate(filePath string) {
 			RoomNotFound:     "The room not found",
 			ConnectionFailed: "The connection failed",
 			Switching:        "Switching...",
+			Blacklisted:      "You are blacklisted :<",
 		},
 	}
 

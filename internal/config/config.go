@@ -22,4 +22,5 @@ type MessagesConfig struct {
 	RoomNotFound     string `json:"room_not_found"`
 	ConnectionFailed string `json:"connection_failed"`
 	Switching        string `json:"switching"`
+	Blacklisted      string `json:"blacklisted"`
 }
