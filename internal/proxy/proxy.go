@@ -37,7 +37,6 @@ func Setup(serverAddress, listenAddress string, blacklist *Blacklist, m *metrics
 				Text: "You are blacklisted :<",
 			}
 			data := terraria.NewPacket(packet)
-			fmt.Printf("Packet Data: %x", data)
 
 			_, err := clientConn.Write(data)
 			if err != nil {
@@ -71,21 +70,19 @@ func handleConnection(clientConn net.Conn, serverAddress string, m *metrics.Metr
 	}
 	defer serverConn.Close()
 
-	clientConn.RemoteAddr()
-
 	// используем функцию-обёртку для копирования данных из сервера к клиенту на слушающий порт
-	go copy(serverConn, clientConn, m, true)
-	copy(clientConn, serverConn, m, false)
+	go send(serverConn, clientConn, m, true)
+	send(clientConn, serverConn, m, false)
+
 }
 
 // Функция-обёртка, чтобы мы могли считать метрику Отправлено и Получено
 // dst есть destination т.е куда пойдут данные и src соотвественно, откуда пришли данные. Incoming - входящее или нет?
-func copy(dst io.Writer, src io.Reader, m *metrics.Metrics, incoming bool) {
+func send(dst io.Writer, src io.Reader, m *metrics.Metrics, incoming bool) {
 	buffer := make([]byte, 32*1024) // буффер для хранения данных при чтения из сети, обозначени 32 КБ, что должно хватить на всё
 
 	for {
 		n, err := src.Read(buffer)
-
 		// если в буффре есть хоть что-то, то начинаем следующие операции:
 		if n > 0 {
 			_, err = dst.Write(buffer[:n]) // берём первые байты и пишем их
@@ -99,5 +96,6 @@ func copy(dst io.Writer, src io.Reader, m *metrics.Metrics, incoming bool) {
 		if err != nil {
 			return
 		}
+
 	}
 }

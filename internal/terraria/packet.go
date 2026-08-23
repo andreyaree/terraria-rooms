@@ -1,6 +1,8 @@
 package terraria
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+)
 
 // Пакет Террарии состоит из его типа и последующих данных
 type TerrariaPacket interface {
@@ -16,6 +18,8 @@ func NewPacket(p TerrariaPacket) []byte {
 	binary.LittleEndian.PutUint16(packet[0:2], uint16(length))
 	packet[2] = p.Type()
 	copy(packet[3:], payload)
+
+	// fmt.Printf("Packet: %x", packet)
 
 	return packet
 }

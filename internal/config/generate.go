@@ -38,7 +38,7 @@ func Generate(filePath string) {
 
 	// Сериализуем структуру в JSON
 
-	data, err := json.MarshalIndent(defaultConfig, " ", "    ")
+	data, err := json.MarshalIndent(defaultConfig, " ", "  ")
 	if err != nil {
 		log.Fatalf("Failed to marshal JSON: %v", err)
 	}

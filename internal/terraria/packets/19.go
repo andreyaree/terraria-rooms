@@ -1,11 +1,11 @@
 package packets
 
-import "github.com/andreyaree/terraria-rooms/internal/utils"
-
 // Реализовываем определенный тип пакета - $19, тот, что отвечает за чат
 type ChatPacket struct {
-	Color utils.Color
-	Text  string
+	R    byte
+	G    byte
+	B    byte
+	Text string
 }
 
 func (p ChatPacket) Type() byte {
@@ -17,10 +17,10 @@ func (p ChatPacket) Payload() []byte {
 	payload := []byte{} // Пустой срез байтов, который предстоит заполнить далее:
 	textLength := byte(len(p.Text))
 
-	payload = append(payload, 255)
-	payload = append(payload, p.Color.R)
-	payload = append(payload, p.Color.G)
-	payload = append(payload, p.Color.B)
+	payload = append(payload, 0xFF)
+	payload = append(payload, p.R)
+	payload = append(payload, p.G)
+	payload = append(payload, p.B)
 	payload = append(payload, textLength)
 	payload = append(payload, []byte(p.Text)...)
 
