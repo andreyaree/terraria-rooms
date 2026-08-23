@@ -7,10 +7,10 @@ Terraria-Rooms is a tool for managing, connecting multiple terraria game servers
 The program provides the following features:
 - TCP packet forwarding
 - Metrics
- - Active connections
- - Total connections
- - Received
- - Sent
+  - Active connections
+  - Total connections
+  - Received
+  - Sent
 - Lightweight
 - Blacklist
 - Easy-to-configure
