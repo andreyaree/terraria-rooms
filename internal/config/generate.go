@@ -32,12 +32,13 @@ func Generate(filePath string) {
 			RoomNotFound:     "The room not found",
 			ConnectionFailed: "The connection failed",
 			Switching:        "Switching...",
+			Blacklisted:      "You are blacklisted :<",
 		},
 	}
 
 	// Сериализуем структуру в JSON
 
-	data, err := json.MarshalIndent(defaultConfig, " ", "    ")
+	data, err := json.MarshalIndent(defaultConfig, " ", "  ")
 	if err != nil {
 		log.Fatalf("Failed to marshal JSON: %v", err)
 	}

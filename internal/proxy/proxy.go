@@ -1,11 +1,15 @@
 package proxy
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net"
+	"time"
 
 	"github.com/andreyaree/terraria-rooms/internal/metrics"
+	"github.com/andreyaree/terraria-rooms/internal/terraria"
+	"github.com/andreyaree/terraria-rooms/internal/terraria/packets"
 )
 
 // Устанавливаем подключение и перехватываем его, работая с ним в следующей функции
@@ -29,6 +33,18 @@ func Setup(serverAddress, listenAddress string, blacklist *Blacklist, m *metrics
 
 		// Проверяем в чёрном списке ли адрес или нет, если истина, тогда обрываем соединение
 		if blacklist.IsBlacklisted(address) {
+			packet := packets.FatalErrorPacket{
+				Text: "You are blacklisted :<",
+			}
+			data := terraria.NewPacket(packet)
+
+			_, err := clientConn.Write(data)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			time.Sleep(time.Second)
+
 			clientConn.Close()
 			return
 		}
@@ -54,21 +70,19 @@ func handleConnection(clientConn net.Conn, serverAddress string, m *metrics.Metr
 	}
 	defer serverConn.Close()
 
-	clientConn.RemoteAddr()
-
 	// используем функцию-обёртку для копирования данных из сервера к клиенту на слушающий порт
-	go copy(serverConn, clientConn, m, true)
-	copy(clientConn, serverConn, m, false)
+	go send(serverConn, clientConn, m, true)
+	send(clientConn, serverConn, m, false)
+
 }
 
 // Функция-обёртка, чтобы мы могли считать метрику Отправлено и Получено
 // dst есть destination т.е куда пойдут данные и src соотвественно, откуда пришли данные. Incoming - входящее или нет?
-func copy(dst io.Writer, src io.Reader, m *metrics.Metrics, incoming bool) {
+func send(dst io.Writer, src io.Reader, m *metrics.Metrics, incoming bool) {
 	buffer := make([]byte, 32*1024) // буффер для хранения данных при чтения из сети, обозначени 32 КБ, что должно хватить на всё
 
 	for {
 		n, err := src.Read(buffer)
-
 		// если в буффре есть хоть что-то, то начинаем следующие операции:
 		if n > 0 {
 			_, err = dst.Write(buffer[:n]) // берём первые байты и пишем их
@@ -82,5 +96,6 @@ func copy(dst io.Writer, src io.Reader, m *metrics.Metrics, incoming bool) {
 		if err != nil {
 			return
 		}
+
 	}
 }
