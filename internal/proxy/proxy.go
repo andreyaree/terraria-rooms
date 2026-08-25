@@ -33,12 +33,12 @@ func Setup(serverAddress, listenAddress string, blacklist *Blacklist, m *metrics
 
 		// Проверяем в чёрном списке ли адрес или нет, если истина, тогда обрываем соединение
 		if blacklist.IsBlacklisted(address) {
-			packet := packets.FatalErrorPacket{
+			msg := packets.FatalErrorPacket{
 				Text: "You are blacklisted :<",
 			}
-			data := terraria.NewPacket(packet)
+			packet := terraria.NewPacket(msg)
 
-			_, err := clientConn.Write(data)
+			_, err := clientConn.Write(packet)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -46,7 +46,7 @@ func Setup(serverAddress, listenAddress string, blacklist *Blacklist, m *metrics
 			time.Sleep(time.Second)
 
 			clientConn.Close()
-			return
+			continue
 		}
 
 		go handleConnection(clientConn, serverAddress, m)
@@ -73,7 +73,6 @@ func handleConnection(clientConn net.Conn, serverAddress string, m *metrics.Metr
 	// используем функцию-обёртку для копирования данных из сервера к клиенту на слушающий порт
 	go send(serverConn, clientConn, m, true)
 	send(clientConn, serverConn, m, false)
-
 }
 
 // Функция-обёртка, чтобы мы могли считать метрику Отправлено и Получено
