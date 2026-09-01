@@ -4,22 +4,21 @@ import (
 	"encoding/binary"
 )
 
-// Пакет Террарии состоит из его типа и последующих данных
-type TerrariaPacket interface {
+/* Интерфейс пакета, который должен реализовывать каждый пакет. Состоит из типа пакета и его данных (payload) */
+type Packet interface {
 	Type() byte
-	Payload() []byte
+	Pld() []byte
 }
 
-func NewPacket(p TerrariaPacket) []byte {
-	payload := p.Payload()
-	length := 1 + len(payload)
-	packet := make([]byte, 3+len(payload))
+func NewPacket(p Packet) []byte {
+	/* Создаём новый пакет, который будет содержать тип пакета и его данные, и общую длину пакета */
+	pld := p.Pld()
+	l := 1 + len(pld)
+	pkt := make([]byte, 3+len(pld))
 
-	binary.LittleEndian.PutUint16(packet[0:2], uint16(length))
-	packet[2] = p.Type()
-	copy(packet[3:], payload)
+	binary.LittleEndian.PutUint16(pkt[0:2], uint16(l))
+	pkt[2] = p.Type()
+	copy(pkt[3:], pld)
 
-	// fmt.Printf("Packet: %x", packet)
-
-	return packet
+	return pkt
 }

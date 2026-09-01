@@ -6,6 +6,7 @@ import (
 )
 
 func Show(m *Metrics) {
+	/* Выводим в консоль метрики, которые мы собираем в процессе работы сервера. Обновляем каждую секунду */
 	for {
 		fmt.Printf("\rActive Connections: %d, All-Time Connections: %d, Received: %d MB, Sent: %d MB",
 			m.ActiveConnections.Load(),

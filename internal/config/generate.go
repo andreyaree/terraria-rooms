@@ -6,10 +6,9 @@ import (
 	"os"
 )
 
-// Если мы не нашли файл конфига, то создаём минимальный новый
-
-func Generate(filePath string) {
-	defaultConfig := Config{
+func Generate(path string) {
+	/* Образец генерируемого файла минимальной конфигурации, который будет создан при отсутствии существующего файла */
+	cfg := Config{
 		Rooms: []RoomsConfig{
 			{
 				Name:          "build",
@@ -36,16 +35,12 @@ func Generate(filePath string) {
 		},
 	}
 
-	// Сериализуем структуру в JSON
-
-	data, err := json.MarshalIndent(defaultConfig, " ", "  ")
+	data, err := json.MarshalIndent(cfg, " ", "  ")
 	if err != nil {
 		log.Fatalf("Failed to marshal JSON: %v", err)
 	}
 
-	// Пишем файл
-
-	err = os.WriteFile(filePath, data, 0755)
+	err = os.WriteFile(path, data, 0755)
 	if err != nil {
 		log.Fatalf("Failed to generate default config file: %v", err)
 	}

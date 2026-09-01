@@ -2,32 +2,30 @@ package proxy
 
 import "fmt"
 
-// Создаём структуру, которая содержит таблицу значение - ключ (Адрес: true/false - блокировать или нет)
 type Blacklist struct {
-	Addresses map[string]bool
+	Addrs map[string]bool
 }
 
-// Новый чёрный список, принимаем в аргументы массив адресов, мы будем брать из конфига, возращая указатель типа Blacklist
-func NewBlacklist(addresses []string) *Blacklist {
-	blacklist := &Blacklist{
-		Addresses: make(map[string]bool),
+func NewBlacklist(addrs []string) *Blacklist {
+	/* Создаём чёрный список, который будет хранить адреса в виде ключей в мапе, а значением будет булево значение (true или false) */
+	bls := &Blacklist{
+		Addrs: make(map[string]bool),
 	}
 
-	for _, address := range addresses {
-		blacklist.Addresses[address] = true // Маркируем как чёрный
+	for _, addr := range addrs {
+		bls.Addrs[addr] = true
 	}
 
-	return blacklist
+	return bls
 }
 
-// Возращаём адрес из таблицы
-func (blacklist *Blacklist) IsBlacklisted(address string) bool {
-	return blacklist.Addresses[address]
+func (bls *Blacklist) GetStatus(addr string) bool {
+	return bls.Addrs[addr]
 }
 
-func (blacklist *Blacklist) ShowBlacklist() {
-	for address := range blacklist.Addresses {
+func (bls *Blacklist) Show() {
+	for addr := range bls.Addrs {
 		fmt.Println("Blacklist contains:")
-		fmt.Println(address)
+		fmt.Println(addr)
 	}
 }

@@ -1,20 +1,21 @@
 package packets
 
-type FatalErrorPacket struct {
-	Text string
+/* Фатальная ошибка. Используем, чтобы выводить свои сообщения клиенту при загрузке и т.д., например если он заблокирован в чёрном списке */
+type FatalError struct {
+	Txt string
 }
 
-func (p FatalErrorPacket) Type() byte {
+func (p FatalError) Type() byte {
 	return 0x02
 }
 
-func (p FatalErrorPacket) Payload() []byte {
-	payload := []byte{}
-	textLength := byte(len(p.Text))
+func (p FatalError) Pld() []byte {
+	pld := []byte{}
+	l := byte(len(p.Txt))
 
-	payload = append(payload, 0x00)
-	payload = append(payload, textLength)
-	payload = append(payload, []byte(p.Text)...)
+	pld = append(pld, 0x00)
+	pld = append(pld, l)
+	pld = append(pld, []byte(p.Txt)...)
 
-	return payload
+	return pld
 }

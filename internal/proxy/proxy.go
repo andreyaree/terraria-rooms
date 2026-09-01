@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -12,49 +11,41 @@ import (
 	"github.com/andreyaree/terraria-rooms/internal/terraria/packets"
 )
 
-// Устанавливаем подключение и перехватываем его, работая с ним в следующей функции
-func Setup(serverAddress, listenAddress string, blacklist *Blacklist, m *metrics.Metrics) {
-	listener, err := net.Listen("tcp", listenAddress)
+func Setup(srvAddr, lstAddr string, bls *Blacklist, m *metrics.Metrics) {
+	/* Настраиваем прослушивание порта, на который будут приходить подключения от клиентов, и перенаправляем их на сервер */
+	lst, err := net.Listen("tcp", lstAddr)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	defer listener.Close()
+	defer lst.Close()
 
 	for {
-		clientConn, err := listener.Accept()
+		clientConn, err := lst.Accept()
 		if err != nil {
 			log.Println(err)
 			return
 		}
 
-		// Получаем и разделяем адрес подключения на две части: IP и порт, и форматируем это в строку
-		address, _, _ := net.SplitHostPort(clientConn.RemoteAddr().String())
+		addr, _, _ := net.SplitHostPort(clientConn.RemoteAddr().String()) // Получаем и разделяем адрес подключения на две части: IP и порт, и форматируем это в строку
 
-		// Проверяем в чёрном списке ли адрес или нет, если истина, тогда обрываем соединение
-		if blacklist.IsBlacklisted(address) {
-			msg := packets.FatalErrorPacket{
-				Text: "You are blacklisted :<",
-			}
-			packet := terraria.NewPacket(msg)
-
-			_, err := clientConn.Write(packet)
-			if err != nil {
-				fmt.Println(err)
-			}
-
+		/* Проверяем в чёрном списке ли адрес или нет, если истина, тогда обрываем соединение */
+		if bls.GetStatus(addr) {
+			writePacket(clientConn, packets.FatalError{
+				Txt: "You are blacklisted :<",
+			})
 			time.Sleep(time.Second)
 
 			clientConn.Close()
 			continue
 		}
 
-		go handleConnection(clientConn, serverAddress, m)
+		go handleConnection(clientConn, srvAddr, m)
 	}
 }
 
-// Работа с подключением, добавляем значения в метрику и "перекачиваем" данные на слушающий порт
-func handleConnection(clientConn net.Conn, serverAddress string, m *metrics.Metrics) {
+func handleConnection(clientConn net.Conn, srvAddr string, m *metrics.Metrics) {
+	/* Обрабатываем подключение клиента, создаём подключение к серверу и перенаправляем данные между ними */
 	m.ActiveConnections.Add(1)
 	m.AllTimeConnections.Add(1)
 
@@ -63,26 +54,32 @@ func handleConnection(clientConn net.Conn, serverAddress string, m *metrics.Metr
 		clientConn.Close()
 	}()
 
-	serverConn, err := net.Dial("tcp", serverAddress)
+	serverConn, err := net.Dial("tcp", srvAddr)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	defer serverConn.Close()
 
-	// используем функцию-обёртку для копирования данных из сервера к клиенту на слушающий порт
 	go send(serverConn, clientConn, m, true)
 	send(clientConn, serverConn, m, false)
 }
 
-// Функция-обёртка, чтобы мы могли считать метрику Отправлено и Получено
-// dst есть destination т.е куда пойдут данные и src соотвественно, откуда пришли данные. Incoming - входящее или нет?
+func writePacket(conn net.Conn, p terraria.Packet) error {
+	pkt := terraria.NewPacket(p)
+	_, err := conn.Write(pkt)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func send(dst io.Writer, src io.Reader, m *metrics.Metrics, incoming bool) {
-	buffer := make([]byte, 32*1024) // буффер для хранения данных при чтения из сети, обозначени 32 КБ, что должно хватить на всё
+	buffer := make([]byte, 32*1024) // создаём буфер размером 32 килобайта, в который будут записываться данные, которые мы будем перенаправлять
 
 	for {
 		n, err := src.Read(buffer)
-		// если в буффре есть хоть что-то, то начинаем следующие операции:
+		/* если в буфере есть хоть что-то, то начинаем следующие операции: */
 		if n > 0 {
 			_, err = dst.Write(buffer[:n]) // берём первые байты и пишем их
 

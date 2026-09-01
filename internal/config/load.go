@@ -7,27 +7,24 @@ import (
 	"os"
 )
 
-// Читаем конфиг из файла по заданному пути и выкидываем ошибки, если это невозможно
-
-func Load(filePath string) Config {
-	b, err := os.ReadFile(filePath) // b сокращенно bytes
+func Load(path string) Config {
+	/* Читаем конфиг из файла по заданному пути */
+	b, err := os.ReadFile(path) // b сокращение от bytes
 	if err != nil {
 		if os.IsNotExist(err) {
 			fmt.Println("Config not found. Generating new one...")
-			Generate(filePath)
+			Generate(path)
 		} else {
 			log.Fatalf("Failed to read config file: %v", err)
 		}
 	}
 
-	// Создаем переменную где будем хранить это
-	var config Config
+	var cfg Config
 
-	// Unmarshal разбирает данные из JSON и преобразовывает в структуры языка
-	err = json.Unmarshal(b, &config) // записываем содержимое файла по адресу в config (который является типом структуры Config)
+	err = json.Unmarshal(b, &cfg)
 	if err != nil {
 		log.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
 
-	return config
+	return cfg
 }

@@ -1,28 +1,27 @@
 package packets
 
-// Реализовываем определенный тип пакета - $19, тот, что отвечает за чат
-type ChatPacket struct {
-	R    byte
-	G    byte
-	B    byte
-	Text string
+/* Реализовываем определенный тип пакета - $19, тот, что отвечает за чат */
+type Chat struct {
+	R   byte
+	G   byte
+	B   byte
+	Txt string
 }
 
-func (p ChatPacket) Type() byte {
+func (p Chat) Type() byte {
 	return 0x19
 }
 
-// Формируем пакет
-func (p ChatPacket) Payload() []byte {
-	payload := []byte{} // Пустой срез байтов, который предстоит заполнить далее:
-	textLength := byte(len(p.Text))
+func (p Chat) Pld() []byte {
+	pld := []byte{}
+	l := byte(len(p.Txt))
 
-	payload = append(payload, 0xFF)
-	payload = append(payload, p.R)
-	payload = append(payload, p.G)
-	payload = append(payload, p.B)
-	payload = append(payload, textLength)
-	payload = append(payload, []byte(p.Text)...)
+	pld = append(pld, 0xFF)
+	pld = append(pld, p.R)
+	pld = append(pld, p.G)
+	pld = append(pld, p.B)
+	pld = append(pld, l)
+	pld = append(pld, []byte(p.Txt)...)
 
-	return payload
+	return pld
 }
