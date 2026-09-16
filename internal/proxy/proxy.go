@@ -2,76 +2,74 @@ package proxy
 
 import (
 	"io"
-	"log"
 	"net"
 	"time"
 
 	"github.com/andreyaree/terraria-rooms/internal/metrics"
-	"github.com/andreyaree/terraria-rooms/internal/terraria"
 	"github.com/andreyaree/terraria-rooms/internal/terraria/packets"
 )
 
-func Setup(srvAddr, lstAddr string, bls *Blacklist, m *metrics.Metrics) {
-	/* Настраиваем прослушивание порта, на который будут приходить подключения от клиентов, и перенаправляем их на сервер */
-	lst, err := net.Listen("tcp", lstAddr)
+func (s *Server) Run() {
+	listener, err := net.Listen("tcp", s.ListenAddr)
 	if err != nil {
-		log.Println(err)
 		return
 	}
-	defer lst.Close()
+	defer listener.Close()
 
 	for {
-		clientConn, err := lst.Accept()
+		clientConn, err := listener.Accept()
 		if err != nil {
-			log.Println(err)
-			return
+			continue
 		}
 
-		addr, _, _ := net.SplitHostPort(clientConn.RemoteAddr().String()) // Получаем и разделяем адрес подключения на две части: IP и порт, и форматируем это в строку
-
-		/* Проверяем в чёрном списке ли адрес или нет, если истина, тогда обрываем соединение */
-		if bls.GetStatus(addr) {
-			writePacket(clientConn, packets.FatalError{
-				Txt: "You are blacklisted :<",
-			})
-			time.Sleep(time.Second)
-
+		serverConn, err := net.Dial("tcp", s.ServerAddr)
+		if err != nil {
 			clientConn.Close()
 			continue
 		}
 
-		go handleConnection(clientConn, srvAddr, m)
+		addr, _, err := net.SplitHostPort(clientConn.RemoteAddr().String())
+		if err != nil {
+			clientConn.Close()
+			serverConn.Close()
+			continue
+		}
+
+		if s.Blacklist.Check(addr) {
+			writePacket(clientConn, packets.FatalError{
+				Txt: "You are blacklisted :<",
+			})
+			time.Sleep(time.Second)
+			clientConn.Close()
+			serverConn.Close()
+			continue
+		}
+
+		session := NewSession(clientConn, serverConn)
+		go session.Run()
 	}
 }
 
-func handleConnection(clientConn net.Conn, srvAddr string, m *metrics.Metrics) {
-	/* Обрабатываем подключение клиента, создаём подключение к серверу и перенаправляем данные между ними */
-	m.ActiveConnections.Add(1)
-	m.AllTimeConnections.Add(1)
+func (s *Session) Run() {
+	s.Metrics.ActiveConnections.Add(1)
+	s.Metrics.AllTimeConnections.Add(1)
+	defer s.Metrics.ActiveConnections.Add(-1)
 
-	defer func() {
-		m.ActiveConnections.Add(-1)
-		clientConn.Close()
+	done := make(chan struct{}, 2)
+
+	go func() {
+		send(s.Server, s.Client, &s.Metrics, true)
+		done <- struct{}{}
+	}()
+	go func() {
+		send(s.Client, s.Server, &s.Metrics, false)
+		done <- struct{}{}
 	}()
 
-	serverConn, err := net.Dial("tcp", srvAddr)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer serverConn.Close()
-
-	go send(serverConn, clientConn, m, true)
-	send(clientConn, serverConn, m, false)
-}
-
-func writePacket(conn net.Conn, p terraria.Packet) error {
-	pkt := terraria.NewPacket(p)
-	_, err := conn.Write(pkt)
-	if err != nil {
-		return err
-	}
-	return nil
+	<-done
+	s.Client.Close()
+	s.Server.Close()
+	<-done
 }
 
 func send(dst io.Writer, src io.Reader, m *metrics.Metrics, incoming bool) {

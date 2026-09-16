@@ -12,16 +12,16 @@ func (p Chat) Type() byte {
 	return 0x19
 }
 
-func (p Chat) Pld() []byte {
-	pld := []byte{}
+func (p Chat) Payload() []byte {
+	payload := []byte{}
 	l := byte(len(p.Txt))
 
-	pld = append(pld, 0xFF)
-	pld = append(pld, p.R)
-	pld = append(pld, p.G)
-	pld = append(pld, p.B)
-	pld = append(pld, l)
-	pld = append(pld, []byte(p.Txt)...)
+	payload = append(payload, 0xFF)
+	payload = append(payload, p.R)
+	payload = append(payload, p.G)
+	payload = append(payload, p.B)
+	payload = append(payload, l)
+	payload = append(payload, []byte(p.Txt)...)
 
-	return pld
+	return payload
 }

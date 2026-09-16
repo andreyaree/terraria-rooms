@@ -9,13 +9,13 @@ func (p FatalError) Type() byte {
 	return 0x02
 }
 
-func (p FatalError) Pld() []byte {
-	pld := []byte{}
+func (p FatalError) Payload() []byte {
+	payload := []byte{}
 	l := byte(len(p.Txt))
 
-	pld = append(pld, 0x00)
-	pld = append(pld, l)
-	pld = append(pld, []byte(p.Txt)...)
+	payload = append(payload, 0x00)
+	payload = append(payload, l)
+	payload = append(payload, []byte(p.Txt)...)
 
-	return pld
+	return payload
 }

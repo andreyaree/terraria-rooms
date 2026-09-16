@@ -7,6 +7,6 @@ func (p Raw) Type() byte {
 	return p.Type()
 }
 
-func (p Raw) Pld() []byte {
-	return p.Pld()
+func (p Raw) Payload() []byte {
+	return p.Payload()
 }
