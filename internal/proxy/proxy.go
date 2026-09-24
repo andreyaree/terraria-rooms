@@ -14,7 +14,11 @@ func (s *Server) Run() {
 	if err != nil {
 		return
 	}
-	defer listener.Close()
+	defer func() {
+		if err := listener.Close(); err != nil {
+			return
+		}
+	}()
 
 	for {
 		clientConn, err := listener.Accept()
@@ -24,24 +28,42 @@ func (s *Server) Run() {
 
 		serverConn, err := net.Dial("tcp", s.ServerAddr)
 		if err != nil {
-			clientConn.Close()
+			err := clientConn.Close()
+			if err != nil {
+				return
+			}
 			continue
 		}
 
 		addr, _, err := net.SplitHostPort(clientConn.RemoteAddr().String())
 		if err != nil {
-			clientConn.Close()
-			serverConn.Close()
+			err := clientConn.Close()
+			if err != nil {
+				return
+			}
+			err = serverConn.Close()
+			if err != nil {
+				return
+			}
 			continue
 		}
 
 		if s.Blacklist.Check(addr) {
-			writePacket(clientConn, packets.FatalError{
+			err := writePacket(clientConn, packets.FatalError{
 				Txt: "You are blacklisted :<",
 			})
+			if err != nil {
+				return
+			}
 			time.Sleep(time.Second)
-			clientConn.Close()
-			serverConn.Close()
+			err = clientConn.Close()
+			if err != nil {
+				return
+			}
+			err = serverConn.Close()
+			if err != nil {
+				return
+			}
 			continue
 		}
 
@@ -67,8 +89,14 @@ func (s *Session) Run() {
 	}()
 
 	<-done
-	s.Client.Close()
-	s.Server.Close()
+	err := s.Client.Close()
+	if err != nil {
+		return
+	}
+	err = s.Server.Close()
+	if err != nil {
+		return
+	}
 	<-done
 }
 
